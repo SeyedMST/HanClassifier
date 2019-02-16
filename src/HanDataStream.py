@@ -33,7 +33,7 @@ def make_idx (label_vocab, label, word_vocab, text, max_sent_length):
 
 
 
-class SentenceMatchDataStream(object):
+class HanDataStream(object):
     def __init__(self, inpath, word_vocab, label_vocab,
                  isShuffle, isLoop, max_sent_length):
         self.instances = []
@@ -50,7 +50,7 @@ class SentenceMatchDataStream(object):
                 make_idx(label_vocab, label, word_vocab, text, max_sent_length)
             #word_idx is list of word indexs of each sentence in the text [SentCnt, SentLen]
             sents_length = [len(cur_word_idx) for cur_word_idx in word_idx]
-            self.instances.append((label, text, np.array([label_id]),
+            self.instances.append((label, text, label_id,
                                    pad_2d_matrix(word_idx), np.array(sents_length)))
         infile.close()
         self.num_instances = len(self.instances)
@@ -67,9 +67,9 @@ class SentenceMatchDataStream(object):
             if not self.isLoop: return None
             self.cur_pointer = 0
             if self.isShuffle: np.random.shuffle(self.index_array)
-        cur_batch = self.instances[self.index_array[self.cur_pointer]]
+        cur_instance = self.instances[self.index_array[self.cur_pointer]]
         self.cur_pointer += 1
-        return cur_batch, self.index_array[self.cur_pointer - 1]
+        return cur_instance, self.index_array[self.cur_pointer - 1]
 
     def reset(self):
         # if self.isShuffle: np.random.shuffle(self.index_array)

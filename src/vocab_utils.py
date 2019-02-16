@@ -579,10 +579,12 @@ def collectVoc(trainpath):
             line = line.decode('utf-8').strip()
         else:
             line = line.strip()
-        item = re.split("\t", line.replace('#!#&', '\t'))
-        sentence = item[0] + ' ' + item[1]
-        sentence = sentence.lower()
-        for word in re.split(' ', sentence):
+        sentence_list = re.split('\t', line.replace('__label__', '\t'))
+        text = ''
+        for sentence in sentence_list:
+            text += sentence + ' '
+        tokenized_text = re.split(' ', text)
+        for word in tokenized_text:
             vocab.add(word)
     data.close()
     return vocab
@@ -596,9 +598,10 @@ def make_data_glove(vec_path , sentence_path_list, out_file_path):
     outfile = open (out_file_path, 'wt')
     cnt = 0
     i = 0
-    more_than_bef = 0
     for line in vec_file:
         i += 1
+        if i == 1:
+            continue #skip first_line
         line_tmp = line
         if sys.version_info[0] < 3:
             line = line.decode('utf-8').strip()
@@ -609,30 +612,26 @@ def make_data_glove(vec_path , sentence_path_list, out_file_path):
         if word in vocab:
             outfile.write(line_tmp)
             cnt += 1
-            if i>300000:
-                more_than_bef += 1
     vec_file.close()
     outfile.close()
-    print (more_than_bef)
-    print (cnt)
-    print (i)
+    print ("final_vocab_count", cnt)
+    print ("first_vocab_count", i)
 
 if __name__ == '__main__':
 
-    l = ['trecqa/', 'wikiqa/']
+
     sentence_path_list = []
-    for qa_path in l:
-        sentence_path_list.append('../data/' +qa_path +'train.txt')
-        sentence_path_list.append('../data/' + qa_path +'dev.txt')
-        sentence_path_list.append('../data/'+qa_path+'test.txt')
+    sentence_path_list.append('../data/news/train1000-6.txt')
+    sentence_path_list.append('../data/news/dev1000-6.txt')
+    sentence_path_list.append('../data/news/test1000-6.txt')
 
-    vec_path1 = '../data/glove/glove.6B.50d.txt'
-    vec_path2 = '../data/glove/glove.840B.300d.txt'
+    vec_path1 = '../data/glove/wiki.fa.vec'
+    #vec_path2 = '../data/glove/glove.840B.300d.txt'
 
-    out_path1 = '../data/glove/my_glove.6B.50d.txt'
-    out_path2 = '../data/glove/my_glove.840B.300d.txt'
-   # make_data_glove(vec_path1, sentence_path_list, out_path1)
-    make_data_glove(vec_path2, sentence_path_list, out_path2)
+    out_path1 = '../data/glove/my_wiki.fa.vec'
+    #out_path2 = '../data/glove/my_glove.840B.300d.txt'
+    make_data_glove(vec_path1, sentence_path_list, out_path1)
+    #make_data_glove(vec_path2, sentence_path_list, out_path2)
     '''# load word vectors
     print('Loading word vectors ... ', end='')
     vocab = Vocab(wordvec_path)

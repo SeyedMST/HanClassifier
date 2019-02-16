@@ -44,11 +44,10 @@ def self_attention(text_context_representation_fw, text_context_representation_b
 
 
 
-#return re
+#return representation of text as a vector
 def HanArc (in_text_repres, sents_length,  mask, input_dim,
-                        context_lstm_dim,is_training,dropout_rate):
+                        context_lstm_dim,is_training,dropout_rate, num_classes):
     with tf.variable_scope('context_represent'):
-
         context_lstm_cell_fw = tf.contrib.rnn.BasicLSTMCell(context_lstm_dim)
         context_lstm_cell_bw = tf.contrib.rnn.BasicLSTMCell(context_lstm_dim)
         if is_training ==True:
@@ -63,6 +62,8 @@ def HanArc (in_text_repres, sents_length,  mask, input_dim,
         (text_context_representation_fw, text_context_representation_bw), _ = rnn.bidirectional_dynamic_rnn(
             context_lstm_cell_fw, context_lstm_cell_bw, in_text_repres, dtype=tf.float32,
             sequence_length=sents_length)  # [sent_cnt, sent_len, context_lstm_dim]
+
+        # self_attention lines (commented for more safety):
         # in_text_repres = tf.concat([text_context_representation_fw,
         #                             text_context_representation_bw], 2) # [sent_cnt,sent_len,2*context_lstm_dim]
         # in_text_repres = self_attention(text_context_representation_fw, text_context_representation_bw, mask,
@@ -70,9 +71,24 @@ def HanArc (in_text_repres, sents_length,  mask, input_dim,
 
         fw_rep = text_context_representation_fw[:, -1, :] #[sent_cnt, dim]
         bw_rep = text_context_representation_bw[:, 0, :] #[sent_cnt, dim]
-        final_sent_repres = tf.concat([fw_rep, bw_rep], 1) #[sent_cnt, dim]
-        #average of sentence representations is final rep:
-        final_text_repres = tf.reduce_mean(final_sent_repres, axis=0) #[dim]
-        final_text_repres_dim = 2*context_lstm_dim
-        return final_text_repres, final_text_repres_dim # dim
+        sent_repres = tf.concat([fw_rep, bw_rep], 1) #[sent_cnt, dim]
+        sent_repres_dim = 2*context_lstm_dim
+
+        w_0 = tf.get_variable("w_0", [sent_repres_dim, sent_repres_dim / 2], dtype=tf.float32)
+        b_0 = tf.get_variable("b_0", [sent_repres_dim / 2], dtype=tf.float32)
+        sent_repres = tf.matmul(sent_repres, w_0) + b_0
+        sent_repres = tf.tanh(sent_repres) # [sent_cnt, dim]
+        sent_repres_dim = sent_repres_dim / 2
+
+        #max pooling of sentence representations is final rep:
+        text_repres = tf.reduce_max(sent_repres, axis=0, keep_dims=True) #[1, dim]
+        if is_training:
+            text_repres = tf.nn.dropout(text_repres, (1 - dropout_rate))
+        else:
+            text_repres = tf.multiply(text_repres, (1 - dropout_rate))
+        w_1 = tf.get_variable("w_1", [sent_repres_dim, num_classes], dtype=tf.float32)
+        b_1 = tf.get_variable("b_1", [num_classes], dtype=tf.float32)
+        class_scores = tf.matmul(text_repres, w_1) + b_1  # [1, num_classes]
+        return class_scores # [1, num_classes]
+
 
