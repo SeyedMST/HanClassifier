@@ -52,7 +52,7 @@ def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None):
         total_tags += 1 #each test instance has 1 instance per batch
         correct_tags += sess.run(valid_graph.eval_correct, feed_dict=feed_dict)
         if outpath is not None:
-            prediction = sess.run(valid_graph.predictions, feed_dict=feed_dict)
+            prediction = sess.run(valid_graph.predictions, feed_dict=feed_dict)[0]
             predicted_label = label_vocab.getWord(prediction)
             if predicted_label != label:
                 outline = predicted_label +"\n"+ text + "__label__" +label +"\n\n"
@@ -60,8 +60,9 @@ def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None):
             if (label, predicted_label) not in confusion_matrix:
                 confusion_matrix [(label, predicted_label)] = 0
             confusion_matrix [(label, predicted_label)] += 1
-            outfile.write(confusion_matrix)
-            outfile.close ()
+    if outpath is not None:
+        outfile.write(str(confusion_matrix))
+        outfile.close ()
     accuracy = correct_tags / total_tags * 100
     return accuracy
 
@@ -176,7 +177,7 @@ def main(_):
                                                  feed_dict=feed_dict)
                 total_loss += loss_value
 
-                if step % 50 == 0:
+                if step % 100 == 0:
                     print('{} '.format(step), end="")
                     sys.stdout.flush()
                 if (step + 1) % epoch_size == 0 or (step + 1) == max_steps:
@@ -205,9 +206,9 @@ def main(_):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_path', type=str,default = '../data/news/train1000-6.txt', help='Path to the train set.')
-    parser.add_argument('--dev_path', type=str, default = '../data/news/dev1000-6.txt', help='Path to the dev set.')
-    parser.add_argument('--test_path', type=str, default = '../data/news/test1000-6.txt',help='Path to the test set.')
+    parser.add_argument('--train_path', type=str,default = '../data/news/train1000-41.txt', help='Path to the train set.')
+    parser.add_argument('--dev_path', type=str, default = '../data/news/dev1000-41.txt', help='Path to the dev set.')
+    parser.add_argument('--test_path', type=str, default = '../data/news/test1000-41.txt',help='Path to the test set.')
     parser.add_argument('--word_vec_path', type=str, default='../data/glove/my_wiki.fa.vec', help='Path the to pre-trained word vector model.')
     parser.add_argument('--model_dir', type=str,default = '../models',help='Directory to save model files.')
     parser.add_argument('--batch_size', type=int, default= 5, help='Number of instances in each batch.')
@@ -218,7 +219,7 @@ if __name__ == '__main__':
     parser.add_argument('--optimize_type', type=str, default='adam', help='Optimizer type.')
     parser.add_argument('--context_lstm_dim', type=int, default=100, help='Number of dimension for context representation layer.')
     parser.add_argument('--max_sent_length', type=int, default=100, help='Maximum number of words within each sentence.')
-    parser.add_argument('--suffix', type=str, default='test', required=False, help='Suffix of the model name.')
+    parser.add_argument('--suffix', type=str, default='test41', required=False, help='Suffix of the model name.')
 
 #     print("CUDA_VISIBLE_DEVICES " + os.environ['CUDA_VISIBLE_DEVICES'])
     sys.stdout.flush()
