@@ -5,18 +5,16 @@ import sys
 import time
 import re
 import tensorflow as tf
-import random
 import numpy as np
 
 
-from vocab_utils import Vocab
-from HanDataStream import HanDataStream
-from HanModelGraph import HanModelGraph
-import namespace_utils
+from .vocab_utils import Vocab
+from .HanDataStream import HanDataStream
+from .HanModelGraph import HanModelGraph
+from .namespace_utils import save_namespace
 
 eps = 1e-8
 FLAGS = None
-
 
 def collect_vocabs(train_path):
     all_labels = set()
@@ -35,12 +33,13 @@ def collect_vocabs(train_path):
     infile.close()
     return (all_words, all_labels)
 
-def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None):
+def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None, mode = None):
     if outpath is not None: outfile = open(outpath, 'wt')
     total_tags = 0.0
     correct_tags = 0.0
     dataStream.reset()
-    confusion_matrix = {}
+    num_classes = label_vocab.size ()
+    confusion_matrix = np.zeros((num_classes, num_classes))
     for instance_index in range(dataStream.get_num_instance()):
         cur_instance = dataStream.get_instance(instance_index)
         (label, text, label_id, word_idx, sents_length) = cur_instance
@@ -49,21 +48,25 @@ def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None):
                     valid_graph.sents_length: sents_length,
                     valid_graph.in_text_words: word_idx,
                 }
+        if mode != None: # we just want to detect the topic of a single input text.
+            return label_vocab.getWord(sess.run (valid_graph.predictions, feed_dict=feed_dict) [0])
         total_tags += 1 #each test instance has 1 instance per batch
         correct_tags += sess.run(valid_graph.eval_correct, feed_dict=feed_dict)
         if outpath is not None:
             prediction = sess.run(valid_graph.predictions, feed_dict=feed_dict)[0]
+            confusion_matrix [prediction, label_id] += 1
             predicted_label = label_vocab.getWord(prediction)
             if predicted_label != label:
                 outline = predicted_label +"\n"+ text + "__label__" +label +"\n\n"
                 outfile.write(outline)
-            if (label, predicted_label) not in confusion_matrix:
-                confusion_matrix [(label, predicted_label)] = 0
-            confusion_matrix [(label, predicted_label)] += 1
-    if outpath is not None:
-        outfile.write(str(confusion_matrix))
-        outfile.close ()
+            # if (label, predicted_label) not in confusion_matrix:
+            #     confusion_matrix [(label, predicted_label)] = 0
+            # confusion_matrix [(label, predicted_label)] += 1
     accuracy = correct_tags / total_tags * 100
+    if outpath is not None:
+        #outfile.write(str(confusion_matrix))
+        outfile.close ()
+        return accuracy, confusion_matrix
     return accuracy
 
 def main(_):
@@ -81,7 +84,7 @@ def main(_):
         os.makedirs(result_dir)
 
     path_prefix = log_dir + "/Han.{}".format(FLAGS.suffix)
-    namespace_utils.save_namespace(FLAGS, path_prefix + ".config.json")
+    save_namespace(FLAGS, path_prefix + ".config.json")
     word_vocab = Vocab(word_vec_path, fileformat='txt3')
     best_path = path_prefix + '.best.model'
     label_path = path_prefix + ".label_vocab"

@@ -1,14 +1,9 @@
 import tensorflow as tf
-#import my_rnn
-import numpy as np
-from tensorflow.python.ops.rnn import dynamic_rnn
-import HanArchitecture
+
+from .HanArchitecture import HanArc
 
 
 eps = 1e-8
-
-
-
 #this function gives a tuple of place holders, the length of tuple is batch size
 def get_place_holder (batch_size, type, shape):
     ans = ()
@@ -44,7 +39,7 @@ class HanModelGraph(object):
                 max_sent_len = input_shape[1]
                 mask = tf.sequence_mask(self.sents_length[i], max_sent_len, dtype=tf.float32) # [sent_cnt, max_sent_len]
 
-                class_scores = HanArchitecture.HanArc(in_text_repres, self.sents_length[i], mask, input_dim,
+                class_scores = HanArc(in_text_repres, self.sents_length[i], mask, input_dim,
                 context_lstm_dim, is_training, dropout_rate, num_classes) #[1, num_classes]
                 class_scores_list.append(class_scores)
                 tf.get_variable_scope().reuse_variables()
@@ -52,6 +47,7 @@ class HanModelGraph(object):
         print (len (class_scores_list))
         self.batch_class_scores = tf.concat(class_scores_list, axis=0) # [batch_size, num_classes]
         print (tf.shape (self.batch_class_scores))
+        self.prob = tf.nn.softmax(self.batch_class_scores)
         self.predictions = tf.arg_max(self.batch_class_scores, 1) #[batch_size]
         correct = tf.nn.in_top_k(self.batch_class_scores, self.truth, 1)
         self.eval_correct = tf.reduce_sum(tf.cast(correct, tf.int32)) #count of correct preds

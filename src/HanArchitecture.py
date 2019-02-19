@@ -20,7 +20,6 @@ def cal_wxb(in_val, scope, output_dim, input_dim, activation = 'relu'):
     outputs = tf.reshape(outputs, [sent_cnt, sent_len, output_dim])
     return outputs # [sent_cnt, sent_len, output_dim]
 
-
 def self_attention(text_context_representation_fw, text_context_representation_bw,mask,input_dim):
     text_context_representation_bw = tf.multiply(text_context_representation_bw,
                                                      tf.expand_dims(mask, -1))
@@ -42,8 +41,6 @@ def self_attention(text_context_representation_fw, text_context_representation_b
     res = tf.reduce_mean(res, axis=1)  # [sent_cnt,dim]
     return res
 
-
-
 #return representation of text as a vector
 def HanArc (in_text_repres, sents_length,  mask, input_dim,
                         context_lstm_dim,is_training,dropout_rate, num_classes):
@@ -62,7 +59,6 @@ def HanArc (in_text_repres, sents_length,  mask, input_dim,
         (text_context_representation_fw, text_context_representation_bw), _ = rnn.bidirectional_dynamic_rnn(
             context_lstm_cell_fw, context_lstm_cell_bw, in_text_repres, dtype=tf.float32,
             sequence_length=sents_length)  # [sent_cnt, sent_len, context_lstm_dim]
-
         # self_attention lines (commented for more safety):
         # in_text_repres = tf.concat([text_context_representation_fw,
         #                             text_context_representation_bw], 2) # [sent_cnt,sent_len,2*context_lstm_dim]

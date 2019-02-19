@@ -1,6 +1,5 @@
 import numpy as np
 import re
-import random
 import sys
 
 
@@ -32,13 +31,17 @@ def make_idx (label_vocab, label, word_vocab, text, max_sent_length):
     return (label_id, word_idx)
 
 
-
 class HanDataStream(object):
     def __init__(self, inpath, word_vocab, label_vocab,
-                 isShuffle, isLoop, max_sent_length):
+                 isShuffle, isLoop, max_sent_length, is_inpath_input_text = False):
         self.instances = []
-        infile = open(inpath, 'rt')
+        if is_inpath_input_text == False: #inpath is not input text and is file path which containes input text.
+            infile = open(inpath, 'rt')
+        else: #inpath is input text :) this function used in HanCaller where the input is text string, not file
+            infile = inpath.split ('\n')
+            #print (infile)
         for line in infile:
+            if  (len (line) < 5): continue
             if sys.version_info[0] < 3:
                 line = line.decode('utf-8').strip()
             else:
@@ -52,7 +55,8 @@ class HanDataStream(object):
             sents_length = [len(cur_word_idx) for cur_word_idx in word_idx]
             self.instances.append((label, text, label_id,
                                    pad_2d_matrix(word_idx), np.array(sents_length)))
-        infile.close()
+        if is_inpath_input_text == False:
+            infile.close()
         self.num_instances = len(self.instances)
 
         self.index_array = np.arange(self.num_instances)
@@ -60,7 +64,7 @@ class HanDataStream(object):
         if self.isShuffle: np.random.shuffle(self.index_array)
         self.isLoop = isLoop
         self.cur_pointer = 0
-        print('DataStream Finished')
+        #print('DataStream Finished')
 
     def nextInstance(self):
         if self.cur_pointer >= self.num_instances:
