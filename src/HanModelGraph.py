@@ -1,6 +1,8 @@
 import tensorflow as tf
-
-from .HanArchitecture import HanArc
+'''
+remove . from the first of package for local testing and keep them when you are using flask, i could not find better way :(
+'''
+from HanArchitecture import HanArc
 
 
 eps = 1e-8
@@ -47,8 +49,8 @@ class HanModelGraph(object):
         print (len (class_scores_list))
         self.batch_class_scores = tf.concat(class_scores_list, axis=0) # [batch_size, num_classes]
         print (tf.shape (self.batch_class_scores))
-        self.prob = tf.nn.softmax(self.batch_class_scores)
-        self.predictions = tf.arg_max(self.batch_class_scores, 1) #[batch_size]
+        self.prob = tf.nn.softmax(self.batch_class_scores) # [batch_size, num_classes]
+        self.predictions = tf.argmax(self.batch_class_scores, 1) #[batch_size]
         correct = tf.nn.in_top_k(self.batch_class_scores, self.truth, 1)
         self.eval_correct = tf.reduce_sum(tf.cast(correct, tf.int32)) #count of correct preds
 

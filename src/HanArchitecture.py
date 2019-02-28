@@ -77,7 +77,7 @@ def HanArc (in_text_repres, sents_length,  mask, input_dim,
         sent_repres_dim = sent_repres_dim / 2
 
         #max pooling of sentence representations is final rep:
-        text_repres = tf.reduce_max(sent_repres, axis=0, keep_dims=True) #[1, dim]
+        text_repres = tf.reduce_max(sent_repres, axis=0, keepdims=True) #[1, dim]
         if is_training:
             text_repres = tf.nn.dropout(text_repres, (1 - dropout_rate))
         else:

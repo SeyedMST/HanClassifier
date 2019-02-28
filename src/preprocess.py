@@ -19,6 +19,14 @@ def make_topic_vocab (topic_file):
 	return vocab
 
 
+'''
+now input text is splitted by special character '__nt__' 
+then it must pass as a jason file
+'''
+def convert_to_text_list (input_texts):
+	input_text_list = input_texts.split ('__nl__')
+	return input_text_list
+
 
 def write_to_string (input_text, label6, label41):
 	#output_string6 = ""

@@ -7,11 +7,13 @@ import re
 import tensorflow as tf
 import numpy as np
 
-
-from .vocab_utils import Vocab
-from .HanDataStream import HanDataStream
-from .HanModelGraph import HanModelGraph
-from .namespace_utils import save_namespace
+'''
+remove . from the first of package for local testing and keep them when you are using flask, i could not find better way :(
+'''
+from vocab_utils import Vocab
+from HanDataStream import HanDataStream
+from HanModelGraph import HanModelGraph
+from namespace_utils import save_namespace
 
 eps = 1e-8
 FLAGS = None
@@ -33,13 +35,39 @@ def collect_vocabs(train_path):
     infile.close()
     return (all_words, all_labels)
 
-def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None, mode = None):
+
+def sort_class_prob (class_probs, label_vocab):
+    num_classes = label_vocab.size ()
+    class_prob = (class_probs.tolist ())[0] #just one instance per batch must be nested loop in other case.
+    class_prob_tuple = list (zip (class_prob, range (num_classes)))
+    class_prob_tuple = sorted (class_prob_tuple,reverse=True)
+    class_prob_tuple_label = []
+    for probe_tuple in class_prob_tuple:
+        class_prob_tuple_label.append((label_vocab.getWord(probe_tuple[1]), probe_tuple[0]))
+    return class_prob_tuple_label [:5] #just first 5 predictions
+
+'''
+evaluate or just predict given dataStream on given valid graph, 
+if mode!=None: 
+    we have to detect the class of given datastream and we dont want to evaluate(runtime test of app on flask)
+if mode == None:
+    We have to evaluate the accuracy of model in this case:
+    if outpath != None:
+         we write content of the wrong predicted classes into output file, confusion matrix is returned as well.
+    else:
+        just evaluate the accuracy. We usually use this mode to test the speed of prediction, and not to analyze its output.
+if get_class_prob == True: the top 5 predicted classes are returned as output, this case take much more time, but it is good, 
+    when we want to select the best class, based on top 5 results as end user. (just can be runned in runtime environment (flask)).
+'''
+def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None, mode = None, get_class_probs = False):
     if outpath is not None: outfile = open(outpath, 'wt')
     total_tags = 0.0
     correct_tags = 0.0
     dataStream.reset()
     num_classes = label_vocab.size ()
     confusion_matrix = np.zeros((num_classes, num_classes))
+    predicted_label_list = []
+    class_prob_list = []
     for instance_index in range(dataStream.get_num_instance()):
         cur_instance = dataStream.get_instance(instance_index)
         (label, text, label_id, word_idx, sents_length) = cur_instance
@@ -49,25 +77,34 @@ def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None, mode
                     valid_graph.in_text_words: word_idx,
                 }
         if mode != None: # we just want to detect the topic of a single input text.
-            return label_vocab.getWord(sess.run (valid_graph.predictions, feed_dict=feed_dict) [0])
-        total_tags += 1 #each test instance has 1 instance per batch
-        correct_tags += sess.run(valid_graph.eval_correct, feed_dict=feed_dict)
+            predicted_label_list.append(label_vocab.getWord(sess.run (valid_graph.predictions, feed_dict=feed_dict) [0]))
+            if get_class_probs != False:
+                class_probs = sess.run(valid_graph.prob, feed_dict=feed_dict)
+                class_prob_list.append(sort_class_prob(class_probs, label_vocab))
+        else:
+            total_tags += 1 #each test instance has 1 instance per batch
+            correct_tags += sess.run(valid_graph.eval_correct, feed_dict=feed_dict)
+            if outpath is not None:
+                prediction = sess.run(valid_graph.predictions, feed_dict=feed_dict)[0]
+                confusion_matrix [prediction, label_id] += 1
+                predicted_label = label_vocab.getWord(prediction)
+                if predicted_label != label:
+                    outline = predicted_label +"\n"+ text + "__label__" +label +"\n\n"
+                    outfile.write(outline)
+                # if (label, predicted_label) not in confusion_matrix:
+                #     confusion_matrix [(label, predicted_label)] = 0
+                # confusion_matrix [(label, predicted_label)] += 1
+    if mode != None:
+        #print (class_prob_list)
+        return predicted_label_list, class_prob_list
+    else:
+        accuracy = correct_tags / total_tags * 100
         if outpath is not None:
-            prediction = sess.run(valid_graph.predictions, feed_dict=feed_dict)[0]
-            confusion_matrix [prediction, label_id] += 1
-            predicted_label = label_vocab.getWord(prediction)
-            if predicted_label != label:
-                outline = predicted_label +"\n"+ text + "__label__" +label +"\n\n"
-                outfile.write(outline)
-            # if (label, predicted_label) not in confusion_matrix:
-            #     confusion_matrix [(label, predicted_label)] = 0
-            # confusion_matrix [(label, predicted_label)] += 1
-    accuracy = correct_tags / total_tags * 100
-    if outpath is not None:
-        #outfile.write(str(confusion_matrix))
-        outfile.close ()
-        return accuracy, confusion_matrix
-    return accuracy
+            #outfile.write(str(confusion_matrix))
+            outfile.close ()
+            return accuracy, confusion_matrix
+        return accuracy
+
 
 def main(_):
     print('Configurations:')
