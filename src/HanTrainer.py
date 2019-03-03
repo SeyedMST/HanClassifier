@@ -229,7 +229,9 @@ def main(_):
                     total_loss = 0.0
                     # Evaluate against the validation set.
                     output_res_file.write('valid- ')
+                    decoding_duration = time.time()
                     dev_accuracy = evaluate(devDataStream, valid_graph, sess)
+                    print ("decoding_duration", time.time() - decoding_duration)
                     output_res_file.write("%.2f\n" % dev_accuracy)
                     print("Current dev accuracy is %.2f" % dev_accuracy)
                     if dev_accuracy > best_accuracy:
@@ -247,15 +249,15 @@ def main(_):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_path', type=str,default = '../data/news/test1000_6.txt', help='Path to the train set.')
-    parser.add_argument('--dev_path', type=str, default = '../data/news/dev1000-6.txt', help='Path to the dev set.')
+    parser.add_argument('--dev_path', type=str, default = '../data/news/test1000-6.txt', help='Path to the dev set.')
     parser.add_argument('--test_path', type=str, default = '../data/news/test1000-6.txt',help='Path to the test set.')
     parser.add_argument('--word_vec_path', type=str, default='../data/glove/my_wiki_test.fa.vec', help='Path the to pre-trained word vector model.')
     parser.add_argument('--model_dir', type=str,default = '../models',help='Directory to save model files.')
-    parser.add_argument('--batch_size', type=int, default= 5, help='Number of instances in each batch.')
+    parser.add_argument('--batch_size', type=int, default= 1, help='Number of instances in each batch.')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate.')
     parser.add_argument('--lambda_l2', type=float, default=0.0, help='The coefficient of L2 regularizer.')
     parser.add_argument('--dropout_rate', type=float, default=0.5, help='Dropout ratio.')
-    parser.add_argument('--max_epochs', type=int, default=20, help='Maximum epochs for training.')
+    parser.add_argument('--max_epochs', type=int, default=1, help='Maximum epochs for training.')
     parser.add_argument('--optimize_type', type=str, default='adam', help='Optimizer type.')
     parser.add_argument('--context_lstm_dim', type=int, default=100, help='Number of dimension for context representation layer.')
     parser.add_argument('--max_sent_length', type=int, default=100, help='Maximum number of words within each sentence.')
