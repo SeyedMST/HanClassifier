@@ -114,7 +114,7 @@ def main(_):
     test_path = FLAGS.test_path
     word_vec_path = FLAGS.word_vec_path
     log_dir = FLAGS.model_dir
-    result_dir = '../result'
+    result_dir = 'result'
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     if not os.path.exists(result_dir):
@@ -248,11 +248,11 @@ def main(_):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_path', type=str,default = '../data/news/test1000_6.txt', help='Path to the train set.')
-    parser.add_argument('--dev_path', type=str, default = '../data/news/test1000-6.txt', help='Path to the dev set.')
-    parser.add_argument('--test_path', type=str, default = '../data/news/test1000-6.txt',help='Path to the test set.')
-    parser.add_argument('--word_vec_path', type=str, default='../data/glove/my_wiki_test.fa.vec', help='Path the to pre-trained word vector model.')
-    parser.add_argument('--model_dir', type=str,default = '../models',help='Directory to save model files.')
+    parser.add_argument('--train_path', type=str,default = 'data/news/test1000_6.txt', help='Path to the train set.')
+    parser.add_argument('--dev_path', type=str, default = 'data/news/test1000-6.txt', help='Path to the dev set.')
+    parser.add_argument('--test_path', type=str, default = 'data/news/test1000-6.txt',help='Path to the test set.')
+    parser.add_argument('--word_vec_path', type=str, default='data/glove/my_wiki_test.fa.vec', help='Path the to pre-trained word vector model.')
+    parser.add_argument('--model_dir', type=str,default = 'models',help='Directory to save model files.')
     parser.add_argument('--batch_size', type=int, default= 1, help='Number of instances in each batch.')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate.')
     parser.add_argument('--lambda_l2', type=float, default=0.0, help='The coefficient of L2 regularizer.')
