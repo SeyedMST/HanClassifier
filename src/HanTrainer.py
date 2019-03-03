@@ -224,14 +224,14 @@ def main(_):
                     # print(total_loss)
                     duration = time.time() - start_time
                     start_time = time.time()
-                    print(duration, step, "Loss: ", total_loss)
+                    print("\n***training_time ****", duration)
                     output_res_file.write('\nStep %d: loss = %.2f (%.3f sec)\n' % (step, total_loss, duration))
                     total_loss = 0.0
                     # Evaluate against the validation set.
                     output_res_file.write('valid- ')
                     decoding_duration = time.time()
                     dev_accuracy = evaluate(devDataStream, valid_graph, sess, label_vocab=label_vocab)
-                    print ("decoding_duration", time.time() - decoding_duration)
+                    print ("***testing_time ****", time.time() - decoding_duration)
                     output_res_file.write("%.2f\n" % dev_accuracy)
                     print("Current dev accuracy is %.2f" % dev_accuracy)
                     # if dev_accuracy > best_accuracy:
