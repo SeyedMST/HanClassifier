@@ -248,7 +248,7 @@ def main(_):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--train_path', type=str,default = 'data/news/test1000_6.txt', help='Path to the train set.')
+    parser.add_argument('--train_path', type=str,default = 'data/news/test1000-6.txt', help='Path to the train set.')
     parser.add_argument('--dev_path', type=str, default = 'data/news/test1000-6.txt', help='Path to the dev set.')
     parser.add_argument('--test_path', type=str, default = 'data/news/test1000-6.txt',help='Path to the test set.')
     parser.add_argument('--word_vec_path', type=str, default='data/glove/my_wiki_test.fa.vec', help='Path the to pre-trained word vector model.')
