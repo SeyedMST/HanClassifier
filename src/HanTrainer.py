@@ -230,17 +230,17 @@ def main(_):
                     # Evaluate against the validation set.
                     output_res_file.write('valid- ')
                     decoding_duration = time.time()
-                    dev_accuracy = evaluate(devDataStream, valid_graph, sess)
+                    dev_accuracy = evaluate(devDataStream, valid_graph, sess, label_vocab=label_vocab)
                     print ("decoding_duration", time.time() - decoding_duration)
                     output_res_file.write("%.2f\n" % dev_accuracy)
                     print("Current dev accuracy is %.2f" % dev_accuracy)
-                    if dev_accuracy > best_accuracy:
-                        best_accuracy = dev_accuracy
-                        saver.save(sess, best_path)
-                    output_res_file.write('test- ')
-                    test_accuracy = evaluate(testDataStream, valid_graph, sess)
-                    print("Current test accuracy is %.2f" % test_accuracy)
-                    output_res_file.write("%.2f\n" % test_accuracy)
+                    # if dev_accuracy > best_accuracy:
+                    #     best_accuracy = dev_accuracy
+                    #     saver.save(sess, best_path)
+                    # output_res_file.write('test- ')
+                    # test_accuracy = evaluate(testDataStream, valid_graph, sess)
+                    # print("Current test accuracy is %.2f" % test_accuracy)
+                    # output_res_file.write("%.2f\n" % test_accuracy)
 
     output_res_file.close()
     sys.stdout.flush()
