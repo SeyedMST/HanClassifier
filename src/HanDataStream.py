@@ -3,6 +3,9 @@ import re
 import sys
 
 
+
+
+
 def pad_2d_matrix(in_val, max_length=None, dtype=np.int32):
     if max_length is None: max_length = np.max([len(cur_in_val) for cur_in_val in in_val])
     batch_size = len(in_val)
@@ -65,6 +68,16 @@ class HanDataStream(object):
         self.isLoop = isLoop
         self.cur_pointer = 0
         #print('DataStream Finished')
+
+
+    def get_cur_pointer (self):
+        return self.cur_pointer
+
+    def get_num_batches (self, batch_size):
+        if self.num_instances % batch_size == 0:
+            return self.num_instances // batch_size
+        else:
+            return 1 + self.num_instances // batch_size
 
     def nextInstance(self):
         if self.cur_pointer >= self.num_instances:

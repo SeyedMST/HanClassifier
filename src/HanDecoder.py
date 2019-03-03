@@ -23,7 +23,7 @@ def load_word_vocab (word_vec_path):
 this function, load model graph based on it model_prefix (model name that we stored)
 and return its valid graph, its session, label vocab and FLAGS (config of graph, like hyperparams, etc)
 '''
-def load_model (model_prefix, word_vocab):
+def load_model (model_prefix, word_vocab, batch_size):
     FLAGS = load_namespace(model_prefix + ".config.json")
     label_vocab = Vocab(model_prefix + ".label_vocab", fileformat='txt2')
     num_classes = label_vocab.size()
@@ -33,10 +33,9 @@ def load_model (model_prefix, word_vocab):
         with tf.variable_scope("Model", reuse=False, initializer=initializer):
             valid_graph = HanModelGraph(num_classes=num_classes, word_vocab=word_vocab,
                                         dropout_rate=FLAGS.dropout_rate, learning_rate=FLAGS.learning_rate,
-                                        optimize_type=FLAGS.optimize_type,
                                         lambda_l2=FLAGS.lambda_l2,
                                         context_lstm_dim=FLAGS.context_lstm_dim,
-                                        is_training=False, batch_size=1)
+                                        is_training=False, batch_size=batch_size)
         vars_ = {}
         print ("ValidGraph Build")
         for var in tf.global_variables():
@@ -53,10 +52,6 @@ def load_model (model_prefix, word_vocab):
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, best_path)
         return valid_graph, sess, label_vocab, FLAGS
-# def load_FLAGS (model_prefix):
-#     print('Loading configurations.')
-#     FLAGS = load_namespace(model_prefix + ".config.json")
-#     print(FLAGS)
 
 
 '''
@@ -79,16 +74,16 @@ else: we have ground truth label with testDataStream and we want to evaluate the
 if get_class_prob == True: it is used when we want to return top 5 predicted class(based on their probability) with their probability,
     it is only used when is_flask = True
 '''
-def decode (model_prefix, label_vocab, valid_graph, sess, testDataStream, out_path = None, get_class_prob = False, is_flask = True):
+def decode (model_prefix, label_vocab, valid_graph, sess, testDataStream, out_path = None, get_class_prob = False, is_flask = True, batch_size = 20):
     if is_flask == False:  # decode and evaluate on given test set
         accuracy = evaluate(testDataStream, valid_graph, sess,
-                                              outpath=out_path, label_vocab=label_vocab,mode=None, get_class_probs=get_class_prob)
+                                              outpath=out_path, label_vocab=label_vocab,mode=None, get_class_probs=get_class_prob, batch_size=batch_size)
         if out_path != None:
             accuracy, confusion_matrix = accuracy
         print("Accuracy for test set is %.2f" % accuracy)
     else:  # in case of flask, which we only want to detect the topic
         classes = evaluate(testDataStream, valid_graph, sess, outpath= out_path,
-                           label_vocab=label_vocab, mode='flask',get_class_probs=get_class_prob)
+                           label_vocab=label_vocab, mode='flask',get_class_probs=get_class_prob, batch_size=batch_size)
         return classes # reutrns 2 list, first one is predicted class labels and second one is list of probability,
                         # if get_class_prob = False: first list has only one member and the second one is empty
 
@@ -105,6 +100,8 @@ if __name__ == '__main__':
     parser.add_argument('--in_path', type=str, default='../data/news/test1000-6.txt', help='the path to the test file.')
     parser.add_argument('--out_path', type=str, default= '../result/test', help='The path to the output file.')
     parser.add_argument('--word_vec_path', type=str, default='../data/glove/my_wiki.fa.vec', help='word embedding file for the input file.')
+    parser.add_argument('--batch_size', type=int, default= 40, help='Number of instances in each batch.')
+
 
     args, unparsed = parser.parse_known_args()
 
@@ -117,13 +114,13 @@ if __name__ == '__main__':
     print("word_vocab_loaded")
     ''' load the model based on model_prefix'''
     valid_graph ,sess, label_vocab, FLAGS = \
-        load_model(model_prefix,word_vocab)
+        load_model(model_prefix,word_vocab, batch_size=args.batch_size)
     print ("model loaded")
     '''load data stream:'''
     first_time = time.time()
     testDataStream = load_data_stream(in_path, word_vocab,label_vocab,FLAGS)
     print ("data_stream build")
     '''decode data stream on graph based on loaded model'''
-    decode(model_prefix, label_vocab, valid_graph, sess, testDataStream, out_path = None, get_class_prob= False, is_flask=False)
+    decode(model_prefix, label_vocab, valid_graph, sess, testDataStream, out_path = None, get_class_prob= False, is_flask=False, batch_size=args.batch_size)
     duration = time.time() - first_time
     print ("duration of decoding: {}".format(duration))
