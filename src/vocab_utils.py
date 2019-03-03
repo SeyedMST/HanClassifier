@@ -621,14 +621,14 @@ if __name__ == '__main__':
 
 
     sentence_path_list = []
-    sentence_path_list.append('../data/news/train1000-6.txt')
+    #sentence_path_list.append('../data/news/train1000-6.txt')
     sentence_path_list.append('../data/news/dev1000-6.txt')
     sentence_path_list.append('../data/news/test1000-6.txt')
 
     vec_path1 = '../data/glove/wiki.fa.vec'
     #vec_path2 = '../data/glove/glove.840B.300d.txt'
 
-    out_path1 = '../data/glove/my_wiki.fa.vec'
+    out_path1 = '../data/glove/my_wiki_test.fa.vec'
     #out_path2 = '../data/glove/my_glove.840B.300d.txt'
     make_data_glove(vec_path1, sentence_path_list, out_path1)
     #make_data_glove(vec_path2, sentence_path_list, out_path2)
